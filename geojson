@@ -1,0 +1,45 @@
+import geoip2.database
+import csv
+import netaddr
+import json
+
+
+def translate( inFile, outFile ):
+    csvFile = file(inFile,'rb')
+    reader = csv.reader(csvFile)
+    geoReader = geoip2.database.Reader('../testdata/GeoLite2-City.mmdb')
+    jsonfile = file(outFile,'wb')
+    nodes=[]
+    for line in reader:
+    	row = {}
+    	ip = netaddr.IPAddress(line[0])
+    	row['ip'] = str(ip)
+    	row['num'] = line[1]
+        try:
+            response = geoReader.city(ip)     
+        except Exception, e:
+            print ip
+            continue   	
+    	row['x'] = response.location.longitude
+    	row['y'] = response.location.latitude
+    	nodes.append(row)
+    allnodes = {}
+    allnodes['nodes'] = nodes
+    encodejson = json.dumps(allnodes)
+    jsonfile.write(encodejson)
+    geoReader.close()
+    csvFile.close()
+    jsonfile.close()
+if __name__ == "__main__":
+     import argparse
+
+     parser = argparse.ArgumentParser()
+     parser.add_argument('inFile', nargs=1, help="Choose the in file to use")
+     parser.add_argument('outFile', nargs=1, help="Choose the out file to use")
+     args = parser.parse_args()
+     translate( args.inFile[0] , args.outFile[0] );
+
+
+
+
+
